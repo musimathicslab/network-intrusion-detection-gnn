@@ -12,9 +12,9 @@ from pre_processing import MAPPING
 from utils.dataset import AnomalyDetectionNodeClassificationDataset
 from torch_geometric.loader import RandomNodeLoader
 
-from utils.nc_model import NodeClassificator
-from utils.nc_model import train
-from utils.nc_model import predict
+from utils.model import NodeClassificator
+from utils.model import train
+from utils.model import predict
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import recall_score
