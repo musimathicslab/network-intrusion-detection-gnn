@@ -6,6 +6,8 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
+from utils import MAPPING
+
 CSV_FILES: final = [
     'UNSW-NB15_1.csv',
     'UNSW-NB15_2.csv',
@@ -105,19 +107,6 @@ FEATURES_TO_STANDARDIZE: final = [
     'ct_dst_sport_ltm',
     'ct_dst_src_ltm',
 ]
-
-MAPPING: final = {
-    "Normal": 0,
-    "Worms": 1,
-    "Backdoors": 2,
-    "Shellcode": 3,
-    "Analysis": 4,
-    "Reconnaissance": 5,
-    "DoS": 6,
-    "Fuzzers": 7,
-    "Exploits": 8,
-    "Generic": 9
-}
 
 
 def pre_processing(dataset_path: str):
