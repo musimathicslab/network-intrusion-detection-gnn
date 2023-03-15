@@ -6,8 +6,6 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
-from utils import MAPPING
-
 CSV_FILES: final = [
     'UNSW-NB15_1.csv',
     'UNSW-NB15_2.csv',
@@ -108,6 +106,19 @@ FEATURES_TO_STANDARDIZE: final = [
     'ct_dst_src_ltm',
 ]
 
+MAPPING: final = {
+    "Normal": 0,
+    "Worms": 1,
+    "Backdoors": 2,
+    "Shellcode": 3,
+    "Analysis": 4,
+    "Reconnaissance": 5,
+    "DoS": 6,
+    "Fuzzers": 7,
+    "Exploits": 8,
+    "Generic": 9
+}
+
 
 def pre_processing(dataset_path: str):
     # Init global dataframe
@@ -164,6 +175,14 @@ def pre_processing(dataset_path: str):
     train.to_csv(os.path.join(dataset_path, 'UNSW-NB15-train.csv'), index=False)
     val.to_csv(os.path.join(dataset_path, 'UNSW-NB15-val.csv'), index=False)
     test.to_csv(os.path.join(dataset_path, 'UNSW-NB15-test.csv'), index=False)
+
+    # Create train, validation and test set for binary classification
+    df['label'] = df['label'].apply(lambda x: 1 if x != 0 else 0)
+    train, val = train_test_split(df, test_size=0.2, shuffle=True, random_state=42)
+    train, test = train_test_split(train, test_size=0.25, shuffle=True, random_state=42)
+    train.to_csv(os.path.join(dataset_path, 'UNSW-NB15-train-binary.csv'), index=False)
+    val.to_csv(os.path.join(dataset_path, 'UNSW-NB15-val-binary.csv'), index=False)
+    test.to_csv(os.path.join(dataset_path, 'UNSW-NB15-test-binary.csv'), index=False)
 
 
 if __name__ == '__main__':
