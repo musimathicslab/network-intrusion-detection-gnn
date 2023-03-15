@@ -7,3 +7,4 @@ torch~=1.13.1
 tqdm~=4.64.1
 imblearn~=0.0
 scikit-learn~=1.2.1
+xgboost~=1.7.4
