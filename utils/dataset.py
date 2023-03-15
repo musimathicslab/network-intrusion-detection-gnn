@@ -14,12 +14,13 @@ from torch_geometric.data import Dataset
 from imblearn.over_sampling import SMOTE
 
 
-class AnomalyDetectionNodeClassificationDataset(Dataset):
-    def __init__(self, root, file_name, num_neighbors=2, augmentation: bool = False,
+class UNSWNB15NodeClassificationDataset(Dataset):
+    def __init__(self, root, file_name, num_neighbors=2, binary: bool = False, augmentation: bool = False,
                  val: bool = False, test: bool = False, transform=None, pre_transform=None):
 
         self.file_name = file_name
         self.num_neighbors = num_neighbors
+        self.binary = binary
         self.augmentation = augmentation
         self.df = None
         self.val = val
@@ -27,7 +28,7 @@ class AnomalyDetectionNodeClassificationDataset(Dataset):
         self.labels_encoder = []
         self.values_encoded = []
 
-        super(AnomalyDetectionNodeClassificationDataset, self).__init__(
+        super(UNSWNB15NodeClassificationDataset, self).__init__(
             root,
             transform,
             pre_transform
@@ -37,12 +38,13 @@ class AnomalyDetectionNodeClassificationDataset(Dataset):
     def processed_file_names(self) -> Union[str, List[str], Tuple]:
         """ If these files are found in raw_dire, processing is skipped. """
         if self.val:
-            file_path = f'ptg_val_{self.num_neighbors}.pt'
+            file_path = f'nb15_val_{"binary_" if self.binary else ""}{self.num_neighbors}.pt'
         else:
             if self.test:
-                file_path = f'ptg_test_{self.num_neighbors}.pt'
+                file_path = f'nb15_test_{"binary_" if self.binary else ""}{self.num_neighbors}.pt'
             else:
-                file_path = f'ptg_{self.num_neighbors}{"_aug" if self.augmentation else ""}.pt'
+                file_path = f'nb15_{"binary_" if self.binary else ""}{self.num_neighbors}' \
+                            f'{"_aug" if self.augmentation else ""}.pt'
         return [file_path]
 
     @property
@@ -61,17 +63,16 @@ class AnomalyDetectionNodeClassificationDataset(Dataset):
         graph = nx.Graph()
         # For each entry of dataframe
         extract_col = [
-                'sttl', 'dload', 'dttl', 'sload', 'smeansz', 'sintpkt', 'dmeansz', 'dintpkt', 'tcprtt', 'ackdat',
-                'synack', 'ct_state_ttl', 'ct_srv_src', 'ct_dst_ltm', 'ct_srv_dst', 'is_sm_ips_ports',
-                'proto_tcp', 'proto_udp', 'proto_other', 'state_fin', 'state_con', 'state_int', 'state_other',
-                'service_-', 'service_dns', 'service_other'
+            'sttl', 'dload', 'dttl', 'sload', 'smeansz', 'sintpkt', 'dmeansz', 'dintpkt', 'tcprtt', 'ackdat',
+            'synack', 'ct_state_ttl', 'ct_srv_src', 'ct_dst_ltm', 'ct_srv_dst', 'is_sm_ips_ports',
+            'proto_tcp', 'proto_udp', 'proto_other', 'state_fin', 'state_con', 'state_int', 'state_other',
+            'service_-', 'service_dns', 'service_other'
         ]
-
         iter_df = self.df[extract_col]
         y = self.df['label'].values
 
         # Apply smote if augmentation is set to True
-        if self.augmentation and not self.test and not self.val and not self.attack:
+        if self.augmentation and not self.test and not self.val and not self.binary:
             counter = Counter(y)
             n_normal = counter[0]
             n_attack = counter[9]
@@ -90,6 +91,8 @@ class AnomalyDetectionNodeClassificationDataset(Dataset):
             x_train, y_train = sm.fit_resample(iter_df.values, y)
             iter_df = pd.DataFrame(x_train, columns=iter_df.columns)
             y = y_train
+
+        print(Counter(y))
 
         for index, flow_entry in tqdm(iter_df.iterrows(), total=iter_df.shape[0], desc=f'Creating nodes...'):
             # Create attr for each label
@@ -122,14 +125,15 @@ class AnomalyDetectionNodeClassificationDataset(Dataset):
 
         # Save data object
         if self.val:
-            file_path = f'ptg_val_{self.num_neighbors}.pt'
+            file_path = f'nb15_val_{"binary_" if self.binary else ""}{self.num_neighbors}.pt'
             torch.save(ptg, os.path.join(self.processed_dir, file_path))
         else:
             if self.test:
-                file_path = f'ptg_test_{self.num_neighbors}.pt'
+                file_path = f'nb15_test_{"binary_" if self.binary else ""}{self.num_neighbors}.pt'
                 torch.save(ptg, os.path.join(self.processed_dir, file_path))
             else:
-                file_path = f'ptg_{self.num_neighbors}{"_aug" if self.augmentation else ""}.pt'
+                file_path = f'nb15_{"binary_" if self.binary else ""}' \
+                            f'{self.num_neighbors}{"_aug" if self.augmentation else ""}.pt'
                 torch.save(ptg, os.path.join(self.processed_dir, file_path))
 
     def len(self) -> int:
@@ -139,14 +143,15 @@ class AnomalyDetectionNodeClassificationDataset(Dataset):
     def get(self, idx: int) -> Data:
         """ Return the idx-th graph. """
         if self.val:
-            file_path = f'ptg_val_{self.num_neighbors}.pt'
+            file_path = f'nb15_val_{"binary_" if self.binary else ""}{self.num_neighbors}.pt'
             data = torch.load(os.path.join(self.processed_dir, file_path))
         else:
             if self.test:
-                file_path = f'ptg_test_{self.num_neighbors}.pt'
+                file_path = f'nb15_test_{"binary_" if self.binary else ""}{self.num_neighbors}.pt'
                 data = torch.load(os.path.join(self.processed_dir, file_path))
             else:
-                file_path = f'ptg_{self.num_neighbors}{"_aug" if self.augmentation else ""}.pt'
+                file_path = f'nb15_{"binary_" if self.binary else ""}' \
+                            f'{self.num_neighbors}{"_aug" if self.augmentation else ""}.pt'
                 data = torch.load(os.path.join(self.processed_dir, file_path))
 
         return data
